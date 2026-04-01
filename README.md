@@ -6,8 +6,6 @@ name: Kacper
 
 surname: Korzekwa
 
-group: II
-
 ## How to start the app
 
 python -m flask --app app/api.py run

@@ -1,0 +1,45 @@
+name: API Tests
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    services:
+      mongo:
+        image: mongo:latest
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.12"
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        
+    - name: Start flask
+      env:
+        MONGO_HOST: localhost
+      run: |
+        export FLASK_APP=app/api.py
+        export FLASK_ENV=development
+        export PYTHONPATH=$GITHUB_WORKSPACE
+        flask run &
+        sleep 5
+        
+    - name: Execute API tests
+      run: |
+        python3 -m pytest app/api_tests/account_crud.py app/api_tests/test_save_load.py
